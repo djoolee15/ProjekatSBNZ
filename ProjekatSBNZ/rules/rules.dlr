@@ -1,0 +1,62 @@
+import com.example.Transaction;
+import com.example.Card;
+
+rule "Suspicious Close-In-Time Transactions"
+    when
+        $card: Card($cardHolder: cardHolder)
+        $transaction1: Transaction(card == $card, $date1: date, $location1: location)
+        $transaction2: Transaction(card == $card, $date2: date, $location2: location, this != $transaction1, Math.abs($date2.getTime() - $date1.getTime()) <= 60_000) // Within 1 minute
+        eval(!$location1.equals($location2)) // Different locations
+    then
+        System.out.println("Suspicious close-in-time transactions for card holder: " + $cardHolder);
+        // Mark transactions as suspicious
+        modify($transaction1) { setSuspicious(true) }
+        modify($transaction2) { setSuspicious(true) }
+end
+
+rule "Suspicious Small Transactions"
+    when
+        $card: Card($cardHolder: cardHolder)
+        $transactions: List(size >= 5) from accumulate(Transaction(card == $card, amount < 50.0, $date: date) over window:time(1h), collectList($date))
+        eval($transactions.size() >= 5) // At least 5 small transactions in 1 hour
+    then
+        System.out.println("Suspicious small transactions for card holder: " + $cardHolder);
+        // Mark transactions as suspicious
+        for (Transaction transaction : $transactions) {
+            modify(transaction) { setSuspicious(true) }
+        }
+end
+
+rule "Suspicious New Location Transactions"
+    when
+        $card: Card($cardHolder: cardHolder)
+        $transaction: Transaction(card == $card, $location: location)
+        not Card(location == $location, this != $card) // No previous card activity in the location
+    then
+        System.out.println("Suspicious new location transaction for card holder: " + $cardHolder);
+        // Mark transaction as suspicious
+        modify($transaction) { setSuspicious(true) }
+end
+
+rule "Suspicious Late Night Transactions"
+    when
+        $card: Card($cardHolder: cardHolder)
+        $transaction: Transaction(card == $card, $date: date, hourOfDay > 22 || hourOfDay < 6) // Transactions between 10 PM and 6 AM
+    then
+        System.out.println("Suspicious late night transaction for card holder: " + $cardHolder);
+        // Mark transaction as suspicious
+        modify($transaction) { setSuspicious(true) }
+end
+
+rule "Suspicious High Amount Transactions"
+    when
+        $card: Card($cardHolder: cardHolder)
+        $transaction: Transaction(card == $card, $amount: amount)
+        $avgAmount: Double() from accumulate(Transaction(card == $card, $a: amount) over window:time(1d), average($a))
+        eval($amount > $avgAmount * 2) // Transaction amount is more than double the average
+    then
+        System.out.println("Suspicious high amount transaction for card holder: " + $cardHolder);
+        // Mark transaction as suspicious
+        modify($transaction) { setSuspicious(true) }
+end
+
