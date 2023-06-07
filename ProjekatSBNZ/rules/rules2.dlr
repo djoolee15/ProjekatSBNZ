@@ -1,0 +1,53 @@
+import com.example.Loan;
+import com.example.Client;
+
+rule "Repayment Period Rule"
+when
+    $loan: Loan()
+    not($loan.repaymentPeriod >= 12 && $loan.repaymentPeriod <= 60)
+then
+    $loan.setValidRepaymentPeriod(false);
+end
+
+rule "Stable Income Rule"
+when
+    $client: Client()
+    $loan: Loan(clientId == $client.id)
+    not($client.hasStableIncome())
+then
+    $loan.setValidRepaymentPeriod(false);
+end
+
+rule "Income Cover Rule"
+when
+    $client: Client()
+    $loan: Loan(clientId == $client.id)
+    not($client.canCoverLoanRepayment($loan.repaymentAmount))
+then
+    $loan.setValidRepaymentPeriod(false);
+end
+
+rule "Existing Loans Rule"
+when
+    $client: Client()
+    $loan: Loan(clientId == $client.id)
+    not($client.canCoverExistingLoanRepayments($loan.repaymentAmount))
+then
+    $loan.setValidRepaymentPeriod(false);
+end
+
+rule "Risk Category Rule"
+when
+    $client: Client(age > 60)
+then
+    $client.setRiskCategory("High");
+end
+
+rule "Priority Rule"
+when
+    $client: Client()
+    $loan: Loan(clientId == $client.id)
+    $client.hasRegularLoanRepayments()
+then
+    $loan.setPriority(1);
+end
