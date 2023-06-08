@@ -1,6 +1,7 @@
 import com.example.Transaction;
 import com.example.Card;
 
+// Prvo pravilo bi trebalo da ima smisla
 rule "Suspicious Close-In-Time Transactions"
     when
         $card: Card($cardHolder: cardHolder)
@@ -14,6 +15,7 @@ rule "Suspicious Close-In-Time Transactions"
         modify($transaction2) { setSuspicious(true) }
 end
 
+// Ovo bi takodje trebalo da ima smisla, samo proveriti da li radi za over window time
 rule "Suspicious Small Transactions"
     when
         $card: Card($cardHolder: cardHolder)
@@ -27,27 +29,30 @@ rule "Suspicious Small Transactions"
         }
 end
 
+//Promenjeno da sada proverava da li postoji transakcija sa iste kartice na istoj toj lokaciji
 rule "Suspicious New Location Transactions"
     when
         $card: Card($cardHolder: cardHolder)
         $transaction: Transaction(card == $card, $location: location)
-        not Card(location == $location, this != $card) // No previous card activity in the location
+        not Transaction(this != $transaction, card == $card, location == $location) // No previous transaction with same card and location
     then
         System.out.println("Suspicious new location transaction for card holder: " + $cardHolder);
         // Mark transaction as suspicious
         modify($transaction) { setSuspicious(true) }
 end
 
+// Takodje bi trebalo da radi samo proveriti time of day momenat
 rule "Suspicious Late Night Transactions"
     when
         $card: Card($cardHolder: cardHolder)
-        $transaction: Transaction(card == $card, $date: date, hourOfDay > 22 || hourOfDay < 6) // Transactions between 10 PM and 6 AM
+        $transaction: Transaction(card == $card, $date: date,  hourOfDay > 22 || hourOfDay < 6) // Transactions between 10 PM and 6 AM
     then
         System.out.println("Suspicious late night transaction for card holder: " + $cardHolder);
         // Mark transaction as suspicious
         modify($transaction) { setSuspicious(true) }
 end
 
+// Matematika valja samo opet proveriti over window time 1d
 rule "Suspicious High Amount Transactions"
     when
         $card: Card($cardHolder: cardHolder)

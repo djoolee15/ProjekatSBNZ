@@ -2,39 +2,40 @@ package classes;
 
 public class Card {
 
-    private Client CardHolder;
+    private Client cardHolder;
 
-    private Integer card_number;
+    private Integer cardNumber;
 
-    private Integer amount;
+    private Integer balance;
 
-    public Card(Client cardHolder, Integer card_number, Integer amount) {
-        CardHolder = cardHolder;
-        this.card_number = card_number;
-        this.amount = amount;
+
+    public Card(Client cardHolder, Integer cardNumber, Integer balance) {
+        this.cardHolder = cardHolder;
+        this.cardNumber = cardNumber;
+        this.balance = balance;
     }
 
     public Client getCardHolder() {
-        return CardHolder;
+        return cardHolder;
     }
 
     public void setCardHolder(Client cardHolder) {
-        CardHolder = cardHolder;
+        this.cardHolder = cardHolder;
     }
 
-    public Integer getCard_number() {
-        return card_number;
+    public Integer getCardNumber() {
+        return cardNumber;
     }
 
-    public void setCard_number(Integer card_number) {
-        this.card_number = card_number;
+    public void setCardNumber(Integer cardNumber) {
+        this.cardNumber = cardNumber;
     }
 
-    public Integer getAmount() {
-        return amount;
+    public Integer getBalance() {
+        return balance;
     }
 
-    public void setAmount(Integer amount) {
-        this.amount = amount;
+    public void setBalance(Integer balance) {
+        this.balance = balance;
     }
 }
